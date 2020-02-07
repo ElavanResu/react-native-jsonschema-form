@@ -21,7 +21,6 @@ import {
 } from "../../utils";
 
 function ArrayFieldTitle({ TitleField, idSchema, title, required }) {
-  console.log('ArrayFieldTitle' ,title )
   if (!title) {
     // See #312: Ensure compatibility with old versions of React.
     return <View />;
@@ -320,7 +319,6 @@ class ArrayField extends Component {
   };
 
   render() {
-    console.log('objectobjectobjectobjectobject')
     const {
       schema,
       uiSchema,

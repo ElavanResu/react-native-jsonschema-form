@@ -32,7 +32,8 @@ function DefaultObjectFieldTemplate(props) {
   return (
 
     <View>
-      {(props.uiSchema["ui:title"] || props.title)? (
+      {/* FIXME: This code block is used to display the title for object field */}
+      {/* {(props.uiSchema["ui:title"] || props.title)? (
         <TitleField
           id={props.idSchema.$id+"__title"}
           title={props.title || props.uiSchema["ui:title"]}
@@ -40,7 +41,7 @@ function DefaultObjectFieldTemplate(props) {
           formContext={props.formContext}
           styleSheet={styleSheet}
         />
-      ):null}
+      ):null} */}
       {props.description && (
         <DescriptionField
           id={props.idSchema.$id+"__description"}
@@ -75,10 +76,14 @@ class ObjectField extends Component {
   state = {
     additionalProperties: {},
   };
-  componentWillUnmount()
-    {
-      this.props.onChange(undefined)
-    }
+
+  // FIXME: Don't know why componentWillUnmount was placed, but it was calling onchange with undefined value
+  // after submitting form with object field. Which sets the value of object field to undefined.
+
+  // componentWillUnmount()
+  //   {
+  //     this.props.onChange(undefined)
+  //   }
     
     isRequired(name) {
     const schema = this.props.schema;

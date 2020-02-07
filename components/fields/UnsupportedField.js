@@ -2,12 +2,12 @@ import React from "react";
 import PropTypes from "prop-types";
 import { View,Text } from 'react-native'
 
-function UnsupportedField({ schema, idSchema, reason }) {
+function UnsupportedField({ schema, idSchema, reason}) {
   return (
     <View className="unsupported-field">
       <View>
         <Text>
-          Unsupported field schema
+          Unsupported field schema {schema,idSchema,reason}
       </Text>
       </View>
     </View>
