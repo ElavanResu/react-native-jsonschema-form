@@ -1,7 +1,7 @@
 import { ADDITIONAL_PROPERTY_FLAG } from "../../utils";
 import React from "react";
 import PropTypes from "prop-types";
-import { Text, TextInput, View } from 'react-native'
+import { Text, TextInput, View, ToastAndroid } from 'react-native'
 import {
   isMultiSelect,
   retrieveSchema,
@@ -16,6 +16,17 @@ import {
 import UnsupportedField from "./UnsupportedField";
 import {getStyle} from '../../utils'
 import _ from "lodash"
+
+const Toast = (props) => {
+  if (props.visible) {
+    ToastAndroid.show(
+      props.message,
+      ToastAndroid.SHORT
+    );
+    return null;
+  }
+  return null;
+};
 
 
 const REQUIRED_FIELD_SYMBOL = "*";
@@ -36,14 +47,15 @@ function getFieldComponent(schema, uiSchema, idSchema, fields) {
   if (typeof field === "string" && field in fields) {
     return fields[field];
   }
-  let Unknown=`Unknown field type ${schema.type}`
   const componentName = COMPONENT_TYPES[getSchemaType(schema)];
+  let Unknown=`Unknown field type ${schema.type}, ${componentName} `
+
   return componentName in fields
     ? fields[componentName]
     : () => {
       return (
         <UnsupportedField
-          schema={schema}
+          schema = {schema}
           idSchema={idSchema}
           reason={Unknown}
         />
@@ -98,13 +110,20 @@ function Help(props) {
 }
 
 function ErrorList(props) {
-  const { errors = [],styleSheet } = props;
+  const { errors = [],styleSheet } = props
+  let result
+  if (props.schema && props.schema.title) {
+    result = props.schema.title
+  } else {
+    result = ''
+  }
+
   if (errors.length === 0) {
     return <View />;
   }
   return (
-    <View>      
-       <Text style={[{color:'red'},getStyle(styleSheet,"errorText","SchemaField")]}>{errors}</Text>
+    <View style={{ paddingLeft: 45 }}>
+      <Text style={[{color:'#B00020'},getStyle(styleSheet,"errorText","SchemaField")]}>{`${result}` + ' ' + errors}</Text>
     </View>
   );
 }
@@ -123,6 +142,7 @@ function DefaultTemplate(props) {
     required,
     displayLabel,
     onKeyChange,
+    showErrorList
   } = props;
   if (hidden) {
     return children;
@@ -131,9 +151,9 @@ function DefaultTemplate(props) {
   const keyLabel = `${label} Key`;
   let idWithKey=`${id}-key`
   return (
-    <View >
+    <View>
       {additional && (
-        <View  className="form-group">
+        <View className="form-group">
           <Label label={keyLabel} required={required} id={idWithKey} />
           <LabelInput
             label={label}
@@ -143,8 +163,9 @@ function DefaultTemplate(props) {
           />
         </View>
       )}
-      {displayLabel && <Label label={label} required={required} id={id} style={[getStyle(styleSheet,'text','SchemaField')]} />}
-      {displayLabel && description ? description : null}
+      {/* {displayLabel && <Label label={label} required={required} id={id} style={[getStyle(styleSheet,'text','SchemaField')]} />} */}
+      {/* {displayLabel && description ? description : null} */}
+      {/* {!showErrorList && <View style={{ marginTop: 8 }} />} */}
       {children}
       {errors}
       {help}
@@ -180,7 +201,7 @@ DefaultTemplate.defaultProps = {
   displayLabel: true,
 };
 
-function SchemaFieldRender(props) {
+function SchemaFieldRender (props) {
   const {
     uiSchema,
     styleSheet,
@@ -190,14 +211,15 @@ function SchemaFieldRender(props) {
     name,
     onKeyChange,
     required,
-    registry = getDefaultRegistry(),
-  } = props;
+    showErrorList,
+    registry = getDefaultRegistry()
+  } = props
   const {
     definitions,
     fields,
     formContext,
-    FieldTemplate = DefaultTemplate,
-  } = registry;
+    FieldTemplate = DefaultTemplate
+  } = registry
   let idSchema = props.idSchema;
   const schema = retrieveSchema(props.schema, definitions, formData);
   idSchema = mergeObjects(
@@ -239,7 +261,6 @@ function SchemaFieldRender(props) {
   }
 
   const { __errors, ...fieldErrorSchema } = errorSchema;
-  // console.log('stylesheet shemafield'  ,styleSheet )
   // See #439: uiSchema: Don't pass consumed class names to child components
   let  styleSheetmer=_.merge({},styleSheet,uiSchema["styleSheet"])
 
@@ -308,22 +329,21 @@ function SchemaFieldRender(props) {
     uiSchema,
     styleSheet
   };
-
-  return <FieldTemplate  {...fieldProps}>{field}</FieldTemplate>;
+  return <FieldTemplate showErrorList={showErrorList} {...fieldProps}>{field}</FieldTemplate>
 }
 
 class SchemaField extends React.Component {
-  shouldComponentUpdate(nextProps, nextState) {
+  shouldComponentUpdate (nextProps, nextState) {
     // if schemas are equal idSchemas will be equal as well,
     // so it is not necessary to compare
     return !deepEquals(
       { ...this.props, idSchema: undefined },
       { ...nextProps, idSchema: undefined }
-    );
+    )
   }
 
-  render() {
-    return SchemaFieldRender(this.props);
+  render () {
+    return SchemaFieldRender(this.props)
   }
 }
 
@@ -339,6 +359,8 @@ SchemaField.defaultProps = {
 if (process.env.NODE_ENV !== "production") {
   SchemaField.propTypes = {
     schema: PropTypes.object.isRequired,
+    test: PropTypes.any,
+    changeFormData: PropTypes.any,
     uiSchema: PropTypes.object,
     idSchema: PropTypes.object,
     formData: PropTypes.any,
@@ -353,8 +375,10 @@ if (process.env.NODE_ENV !== "production") {
       ObjectFieldTemplate: PropTypes.func,
       FieldTemplate: PropTypes.func,
       formContext: PropTypes.object.isRequired,
-    }),
-  };
+      test: PropTypes.any,
+      changeFormData: PropTypes.any
+    })
+  }
 }
 
-export default SchemaField;
+export default SchemaField

@@ -15,7 +15,7 @@ export default {
   DescriptionField,
   NumberField,
   ObjectField,
-  SchemaField,
+  SchemaField,  
   StringField,
   TitleField,
   UnsupportedField,  
