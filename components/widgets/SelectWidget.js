@@ -1,62 +1,49 @@
-import React from "react";
-import RNPickerSelect from 'react-native-picker-select';
-import { asNumber } from "../../utils";
-import _ from 'lodash'
-import { Text, View, StyleSheet,Image,Platform } from 'react-native'
-import {getStyle} from '../../utils'
+import React from 'react'
+// import RNPaperSelect from '../../../ReactNativePickerSelect'
+// import RNPaperSelect from '../../../TestPicker'
+import RNPaperSelect from 'react-native-paper-select'
+import includes from 'lodash/includes'
+import { StyleSheet } from 'react-native'
+import { getStyle, asNumber } from '../../utils'
 
-const nums = new Set(["number", "integer"]);
+const nums = new Set(['number', 'integer'])
 
 /**
  * This is a silly limitation in the DOM where option change event values are
  * always retrieved as strings.
  */
-function processValue({ type, items }, value) {
+function processValue ({ type, items }, value) {
   if (value == null) {
-    return undefined;
+    return undefined
+  } else if (value === '') {
+    return undefined
+  } else if (type === 'array' && items && nums.has(items.type)) {
+    return value.map(asNumber)
+  } else if (type === 'boolean') {
+    return value === 'true'
+  } else if (type === 'number') {
+    return asNumber(value)
   }
-  else if (value === "") {
-    return undefined;
-  } else if (type === "array" && items && nums.has(items.type)) {
-    return value.map(asNumber);
-  } else if (type === "boolean") {
-    return value === "true";
-  } else if (type === "number") {
-    return asNumber(value);
-  }
-  return value;
+  return value
 }
 
-function getValue(event, multiple) {
-  if (multiple) {
-    return [].slice
-      .call(event.target.options)
-      .filter(o => o.selected)
-      .map(o => o.value);
-  } else {
-    return event.target.value;
-  }
-}
-
-class SelectWidget extends React.Component {
-  constructor(props){
+class SelectButtonWidget extends React.Component {
+  constructor (props) {
     super(props)
     this.state = {
-      pickerSelect:''
+      pickerSelect: ''
     }
   }
-  
-  componentDidUpdate(prevProps, prevState, snapshot)
-  {     
+
+  componentDidUpdate (prevProps, prevState, snapshot) {
     let optionsFull = []
-      this.props.options.enumOptions.forEach(element => {
+    this.props.options.enumOptions.forEach(element => {
       optionsFull.push(element.value)
-    });
-    if (this.props.value!=null && !_.includes(optionsFull,this.props.value))
-     this.props.onChange(processValue(this.props.schema, undefined))
+    })
+    if (this.props.value != null && !includes(optionsFull, this.props.value)) { this.props.onChange(processValue(this.props.schema, undefined)) }
   }
-  
-  render(){
+
+  render () {
     const {
       schema,
       id,
@@ -71,76 +58,55 @@ class SelectWidget extends React.Component {
       onBlur,
       onFocus,
       placeholder,
-      styleSheet,
-    } = this.props;
-    const { enumOptions, enumDisabled } = options;    
-    const emptyValue = multiple ? [] : placeholder?placeholder:"";    
-    let optionsFull = []    
-    let label=undefined
+      formContext,
+      rawErrors,
+      styleSheet
+    } = this.props
+    let showError
+    if (rawErrors && rawErrors.length > 0) {
+      showError = true
+    } else {
+      showError = false
+    }
+    const { enumOptions, enumDisabled } = options
+    const emptyValue = multiple ? [] : placeholder || ''
+    let optionsFull = []
+    let label
     enumOptions.forEach(element => {
       optionsFull.push(element.label)
-      if(element.value==value)
-        label=element.label
-    });    
-    // const valueverified=_.includes(optionsFull,value)?value:emptyValue
-    // onChange(processValue(schema, valueverified))
-    let widgetStyle = (styleName) => getStyle(styleSheet, styleName, "SelectWidget")
+      if (element.value === value) { label = element.label }
+    })
     return (
-        <RNPickerSelect
-          id={id}
-          placeholder={{
-            label: emptyValue,
-            value: undefined,
-            color: '#9EA0A4',
-          }}
-          disabled={disabled || readonly}
-          items={enumOptions}
-          required={required}
-          multiple={multiple}
-          autoFocus={autofocus}
-          onValueChange={Platform.OS === 'ios'? (value) =>{this.setState({pickerSelect:value})}: value => { onChange(processValue(schema, value)) }}
-          onDonePress={() =>{onChange(processValue(schema, this.state.pickerSelect))}}	
-          style={{chevronUp: {
-            transform: [{ translateY: 17 }, { rotate: '45deg' }],
-        },
-        chevronDown: {
-          transform: [{ translateY: 8 }, { rotate: '-135deg' }],
-      },
-     
-      }}
-        >
-          <View style={[styles.content, widgetStyle('content')]}>
-            {label ?
-              <Text style={widgetStyle('text')}>{label}</Text>
-              : <Text style={widgetStyle('placeHolderText')}>{emptyValue}</Text>}
-            <Image
-              source={require('../../images/dark.png')}
-            />
-          </View>
-        </RNPickerSelect>
-    );
+      <RNPaperSelect
+        theme={{
+          colors: formContext.colorTheme
+        }}
+        mode='outlined'
+        showError={showError}
+        label={schema.title}
+        textInputValue={label}
+        textInputStyle={styles.textInput}
+        items={enumOptions}
+        onValueChange={value => {
+          onChange(value)
+        }}
+        pickerValue={value}
+      />
+    )
   }
 }
 
 const styles = StyleSheet.create({
-  content: {
-    padding:14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: "rgba(255,255,255,0.9)",
+  container: {
+    marginTop: 16
   },
-  dropdownStyle:{
-    height:130
+  labelContainer: {
+    height: 50
   },
-  dropdownTextStyle:{
-    textAlign:'left',
-    fontSize:20
-  },
-  inputAndroid:{
-    fontSize:70,
-    color:'green'
-          }
+  textInput: {
+    backgroundColor: '#FFFFFF',
+    marginTop: 16
+  }
 })
 
-export default SelectWidget;
+export default SelectButtonWidget
