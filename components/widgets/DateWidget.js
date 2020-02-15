@@ -1,224 +1,109 @@
-import React from "react";
-import { Text, StyleSheet, View, TouchableOpacity, I18nManager,Image } from 'react-native'
-import {default as DropIcon} from 'react-native-vector-icons/FontAwesome';
-import moment from 'moment'
-import Icon from 'react-native-vector-icons/SimpleLineIcons';
-import { Calendar } from 'react-native-calendars'
-import ReactModal from 'react-native-modal';
-import _ from 'lodash'
-import {getStyle} from '../../utils'
+import React, { useState } from 'react'
+import dayjs from 'dayjs'
+import { View, TouchableOpacity, StyleSheet } from 'react-native'
+import DateTimePicker from 'react-native-modal-datetime-picker'
+import { TextInput } from 'react-native-paper'
 
-const today = moment().startOf('day')
+const DateWidget = (props) => {
+  let inputRef
 
-class DateWidget extends React.Component {
-  constructor(props) {
-    super(props)
+  const [isDateTimePickerVisible, setIsDateTimePickerVisible] = useState(false)
 
-    const {dates,startDay,endDate} = this.getValidDates(props)
-    const startDayFormat = startDay.format('YYYY-MM-DD')
-    // props.onChange(startDayFormat)
-    this.state = {
-      calander: false,
-      calanderSelection: null,
-      dateSelected:'',
-      startDay:startDayFormat,
-      endDate:endDate.format('YYYY-MM-DD'),
-      possibleDates:dates,
-      theme : {
-        textSectionTitleColor: this.widgetStyle('textSectionTitleColor').color || '#6DA1B7',
-        selectedDayBackgroundColor: this.widgetStyle('selectedDayBackgroundColor').color || '#6DA1B7',
-        selectedDayTextColor: this.widgetStyle('selectedDayTextColor').color || '#ffffff',
-        todayTextColor: this.widgetStyle('todayTextColor').color || '#6DA1B7',
-        arrowColor:this.widgetStyle('arrowColor').color || '#6DA1B7',
-        monthTextColor:this.widgetStyle('monthTextColor').color || '#6DA1B7',
-        textDayFontFamily: this.widgetStyle('dateFonts').fontFamily || null,
-        textMonthFontFamily: this.widgetStyle('dateFonts').fontFamily || null,
-        textDayHeaderFontFamily: this.widgetStyle('dateFonts').fontFamily || null,
-        textMonthFontWeight: this.widgetStyle('textMonthFontWeight').fontWeight || 'bold',
-        textDayFontSize: this.widgetStyle('dateFonts').fontSize || 16,
-        textMonthFontSize: this.widgetStyle('dateFonts').fontSize || 16,
-        textDayHeaderFontSize: this.widgetStyle('dateFonts').fontSize || 16,
-      }
-    }
+  const buildMinMaxDates = () => {
+    const { options } = props
+    const { min, max, type } = options
+    const minDate = dayjs().subtract(min, type).format('YYYY/MM/DD')
+    const maxDate = dayjs().add(max, type).format('YYYY/MM/DD')
+    return { minDate, maxDate }
   }
 
-  widgetStyle=(styleName)=>getStyle(this.props.styleSheet,styleName,"DateWidget")
-
-
-  getValidDates(props){
-    let dates = {}
-    let possibleDates = {}
-    let startDay = today
-    let endDate = today
-   
-    props.options.enumOptions.forEach((options) => {
-     
-      let date = moment(options.value).startOf('day')
-
-      if(date >= today && (startDay === null || date <= startDay)){
-        startDay = date
-      }
-      if((endDate>today) && endDate === null || date >= endDate){
-        endDate = date
-      }
-      if(date < today){
-        possibleDates[options.value] = {disabled: true, disableTouchEvent: true}
-      }else{
-        possibleDates[options.value] = {disabled: false, disableTouchEvent: false}
-      }
-    })
-
-    let daysBetweenDates = moment.duration(endDate.diff(startDay)).asDays()
-
-     for(let i = 0; i <= daysBetweenDates; i++){
-      let formatDate = {[moment().add(i,'d').format('YYYY-MM-DD')]:{disabled: true, disableTouchEvent: true}}
-      dates = Object.assign(formatDate, dates)
-      }
-
-      _.forIn(possibleDates,(value,key) => {
-        dates[key] = value
-      });
-
-    
-    const intial ={dates,startDay,endDate}
-
-   return intial
+  showDateTimePicker = () => {
+    setIsDateTimePickerVisible(true)
   }
 
-  toggleCalendar() {
-    this.setState({
-      calander: !this.state.calander
-    })
+  hideDateTimePicker = () => {
+    setIsDateTimePickerVisible(false)
   }
 
-  onPressDay(date) {
-    let myDates = _.cloneDeep(this.state.possibleDates) 
-    if(this.state.calanderSelection){
-      myDates[this.state.calanderSelection].selected = false
-    }
-    myDates[date.dateString].selected = true
-    this.setState({
-      possibleDates:myDates,
-      calanderSelection:date.dateString
-    });
+  const handleDatePicked = date => {
+    console.log('handleDatePicked called')
+    // onChange(dayjs(date).format('YYYY-MM-DD'))
+    inputRef.blur()
+    hideDateTimePicker()
+    onChange(dayjs(date).format('YYYY-MM-DD'))
   }
 
-  getDate() {
-    const dateUi = moment(this.state.calanderSelection).format('dddd, YYYY-MM-DD')
-    const dateSchema = moment(this.state.calanderSelection).format('YYYY-MM-DD').toString()
-    this.setState({dateSelected: dateUi});
-    this.toggleCalendar()
-    this.props.onChange(dateSchema)
+  const onChange = (value) => {
+    console.log('onChange called')
+    return props.onChange(value === '' ? undefined : value)
   }
 
-  renderArrow(direction) {
-    if (I18nManager.isRTL) {
-      switch (direction) {
-        case 'left':
-          direction = 'right'
-          break;
-        case 'right':
-          direction = 'left'
-          break;
-      }
-    }
-    return (
-      <Icon
-        name={`arrow-${direction}`}
-        color={'#6DA1B7'}
-        size={18}
-      />
-    )
-  }
+  const {
+    // id,
+    value,
+    // readonly,
+    // disabled,
+    // autofocus,
+    // onBlur,
+    // onFocus,
+    // options,
+    // schema,
+    formContext,
+    label,
+    // onChange,
+    // errorSchema,
+    // classes,
+    rawErrors,
+    ...inputProps
+  } = props
 
-  renderWidgetButton() {
-    return (
-      <TouchableOpacity style={[styles.content,this.widgetStyle('content')]} onPress={() => this.toggleCalendar()}>
-      {this.state.dateSelected ? 
-        <Text style={[styles.dropText,this.widgetStyle('dropText')]} >{this.state.dateSelected}</Text> :
-        <Text style={[styles.dropText,this.widgetStyle('placeholderdropText')]} >{this.props.schema.placeHolder}</Text>
-      }
-      <Image
-      source={require('../../images/dark.png')}
-    />
-      </TouchableOpacity>
-    )
+  let showError
+  if (rawErrors && rawErrors.length > 0) {
+    showError = true
+  } else {
+    showError = false
   }
+  const { minDate, maxDate } = buildMinMaxDates()
 
-  renderCalander() {
-    return (
-      <View style={[styles.container,this.widgetStyle('container')]} >
-        <Calendar
-        theme={this.state.theme}
-        onDayPress={(date) => this.onPressDay(date)}
-        minDate={this.state.startDay}
-        maxDate={this.state.endDate}
-        markedDates={{...this.state.possibleDates}}
-        renderArrow={direction => this.renderArrow(direction)}
-        hideExtraDays={true}
-      />
-        {this.renderCalanderButton()}
-    </View>
-    )
-  }
-
-
-  renderCalanderButton() {
-    return (
-      <TouchableOpacity onPress={() => this.getDate()} style={styles.button} >
-        <Text style={[styles.buttonText,this.widgetStyle('buttonText')]}>{this.props.schema.ChooseButtonText}</Text>
-      </TouchableOpacity>
-    )
-  }
-
-  render() {
-    return (
-      <React.Fragment>
-        <ReactModal
-          isVisible={this.state.calander}
-          animationIn="zoomIn"
-          animationOut="zoomOut"
-          onBackdropPress={() => { this.toggleCalendar() }}
-          onBackButtonPress={() => { this.toggleCalendar() }}>
-          {this.renderCalander()}
-        </ReactModal>
-        {this.renderWidgetButton()}
-      </React.Fragment>
-    );
-  }
+  return (
+    <TouchableOpacity onPress={showDateTimePicker} style={styles.touchableOpacity}>
+      <View pointerEvents='none'>
+        <TextInput
+          theme={{
+            colors: formContext.colorTheme
+          }}
+          style={styles.textInput}
+          mode='outlined'
+          error={showError}
+          pointerEvents='none'
+          ref={(ref) => {
+            inputRef = ref
+          }}
+          readOnly
+          value={value ? dayjs(value).format('DD/MM/YYYY') : ''}
+          label={label}
+          editable={false}
+        />
+        <DateTimePicker
+          datePickerModeAndroid='spinner'
+          isVisible={isDateTimePickerVisible}
+          onConfirm={handleDatePicked}
+          onCancel={hideDateTimePicker}
+          minimumDate={new Date(minDate)}
+          maximumDate={new Date(maxDate)}
+        />
+      </View>
+    </TouchableOpacity>
+  )
 }
 
-
-
-
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: 'white',
-    padding: 10,
+  touchableOpacity: {
+    marginTop: 16
   },
-  content: {
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: "rgba(255,255,255,0.9)",
-    marginTop: 5,
-    marginBottom: 5
-  },
-  button: {
-    backgroundColor: '#7eaabd',
-    height: 50,
-    width: '90%',
-    justifyContent: 'center',
-    display: 'flex',
-    alignItems: 'center',
-    alignSelf: 'center',
-    margin: 10
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 20
+  textInput: {
+    backgroundColor: '#FFFFFF'
   }
 })
 
-export default DateWidget;
+export default DateWidget

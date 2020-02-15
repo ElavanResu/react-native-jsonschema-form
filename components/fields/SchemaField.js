@@ -122,7 +122,7 @@ function ErrorList(props) {
     return <View />;
   }
   return (
-    <View style={{ paddingLeft: 45 }}>
+    <View style={{ paddingLeft: 13 }}>
       <Text style={[{color:'#B00020'},getStyle(styleSheet,"errorText","SchemaField")]}>{`${result}` + ' ' + errors}</Text>
     </View>
   );
